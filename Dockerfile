@@ -1,29 +1,17 @@
-# Use an appropriate base image with a lightweight OS
-FROM debian:stable-slim
+FROM ubuntu:latest
 
-# Install necessary packages
 RUN apt-get update && \
-    apt-get install -y \
-    netcat-openbsd \
-    fortune-mod \
-    cowsay \
-    bash \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get -y install fortune cowsay 
 
-# Add /usr/games to the PATH environment variable
-ENV PATH="/usr/games:${PATH}"
+RUN apt-get install -y netcat-openbsd
 
-#Setting working directory
-WORKDIR /usr/src/app
+RUN cp -pr /usr/games/fortune /bin/fortune
+RUN cp -pr /usr/games/cowsay /bin/cowsay
 
-# Copy the application into the container
-COPY . .
+COPY wisecow.sh /app/wisecow.sh
 
-# Make the shell script executable
-RUN chmod +x wisecow.sh
+RUN chmod +x /app/wisecow.sh
 
-# Expose the port the server will run on
 EXPOSE 4499
 
-# Set the entrypoint to run the shell script
-ENTRYPOINT ["./wisecow.sh"]
+ENTRYPOINT ["/usr/bin/env","/app/wisecow.sh"]
