@@ -1,37 +1,30 @@
-name: CI/CD Pipeline
+name: Docker Build and Push, Kubernetes Deploy CI-CD
 
 on:
   push:
-    branches:
-      - main
+    branches: [ "main" ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
-
-    - name: Build Docker image
+    - uses: actions/checkout@v4
+    - name: Build the Docker image
       run: |
-        docker build -t <your-dockerhub-username>/wisecow-app:latest .
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/wisecow:latest .
+          docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
+          docker push ${{ secrets.DOCKER_USERNAME }}/wisecow:latest
 
-    - name: Log in to Docker Hub
-      run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
-
-    - name: Push Docker image
-      run: docker push <your-dockerhub-username>/wisecow-app:latest
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-    steps:
-    - name: Set up kubectl
-      uses: azure/setup-kubectl@v1
-      with:
-        version: 'latest'
-
-    - name: Deploy to Kubernetes
+    - name: Create kubeconfig and manage self-signed SSL certs
       run: |
-        kubectl apply -f k8s/deployment.yaml
-        kubectl apply -f k8s/service.yaml
+        mkdir -p $HOME/.kube
+        echo "${{ secrets.CERT_FILE }}" > $HOME/.kube/ca.crt 
+        echo "${{ secrets.CLIENT_CERT }}" > $HOME/.kube/client.crt 
+        echo "${{ secrets.CLIENT_KEY }}" > $HOME/.kube/client.key
+        echo "${{ secrets.KUBE_CONFIG }}" > $HOME/.kube/config
+      
+    - name: Deploy the image to Kubernetes
+      run: |
+          minikube start 
+          kubectl apply -f deployment.yaml
