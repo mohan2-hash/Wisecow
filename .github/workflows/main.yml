@@ -14,13 +14,13 @@ jobs:
 
     - name: Build Docker image
       run: |
-        docker build -t <your-dockerhub-mohan2-hash>/wisecow-app:latest .
+        docker build -t <your-dockerhub-username>/wisecow-app:latest .
 
     - name: Log in to Docker Hub
       run: echo "${{ secrets.DOCKER_HUB_TOKEN }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
     - name: Push Docker image
-      run: docker push <your-dockerhub-mohan2-hash>/wisecow-app:latest
+      run: docker push <your-dockerhub-username>/wisecow-app:latest
 
   deploy:
     runs-on: ubuntu-latest
